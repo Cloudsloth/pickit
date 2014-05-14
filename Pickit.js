@@ -237,7 +237,7 @@ var Pickit = {
 				mids = 0,
 				highs = 0,
 				stacks = 0;
-			if(pickit.classids.findIndex(unit.classid) == -1){return false}
+			if(pickit.classids.indexOf(unit.classid) == -1){return false}
 			if(!item.getFlag(0x10);){result = -1; return true}
 			Object.keys(pickit.flags).forEach(checkFlag);
 			Object.keys(pickit.stats).forEach(checkStat);
@@ -256,7 +256,7 @@ var Pickit = {
 			}
 		var result = 0, line = null;	
 		//check potions
-		line = testpickits.findIndex(checkMatch);
+		line = testpickits.indexOf(checkMatch);
 		return {result: result, line: line}
 		},
 	
@@ -278,7 +278,7 @@ var Pickit = {
 		if(method == "trade"){
 			//check if character to trade with is present!
 			var inventorylocations = [1, 3, 6, 7];
-			while(inventorylocations.findIndex(getUnit(4, -1, -1, gid).location) != -1){
+			while(inventorylocations.indexOf(getUnit(4, -1, -1, gid).location) != -1){
 				var tradestate = getTradeInfo(0);
 				switch(tradestate){
 					case 0: // waiting
