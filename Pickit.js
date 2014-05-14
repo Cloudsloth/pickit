@@ -256,7 +256,7 @@ var Pickit = {
 			}
 		var result = 0, line = null;	
 		//check potions
-		line = testpickits.indexOf(checkMatch);
+		line = testpickits.findIndex(checkMatch());
 		return {result: result, line: line}
 		},
 	
