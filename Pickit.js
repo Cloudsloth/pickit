@@ -7,7 +7,6 @@
 
 /*
 I have made 'better' versions of a few functions
-I haven't tested this in a game yet so it might still need bugfixing
 
 checkItem -> checkSwag
 pickItems -> grabGoodItems
@@ -32,14 +31,14 @@ var Pickit = {
 	gidList: [],
 	beltSize: 1,
 	ignoreLog: [4, 5, 6, 22, 41, 76, 77, 78, 79, 80, 81], // Ignored item types for item logging
-	testpickit: [
+	//currpick: {},
+	testpickits: [{
+		//###these weren't working, so the test pickit is now declared in the checkSwag function###
 		//I added two test pickits in here
 		//the first will pick up any Harlequin's Crest(shako)
 		//the second is for a rare cruel fools ias flail
 		//the shako pickit is for testing, the flail one
 		//is to show how a good rare pickit might look
-		
-		{
 		"name": "shako",
 		"classids": [422],
 		"weight": {
@@ -48,7 +47,7 @@ var Pickit = {
 			"mid": 2,
 			"low": 1,
 			"PickAt": 8
-			}
+			},
 		"stats": {
 			"itemallskills": {
 				"stack": 0,
@@ -67,7 +66,7 @@ var Pickit = {
 				"high": 0,
 				"mid": 10,
 				"low": 0
-				},
+				}
 			}
 		},
 		{
@@ -86,7 +85,7 @@ var Pickit = {
 			"mid": 2,
 			"low": 1,
 			"PickAt": 8
-			}
+			},
 		"stats": {
 		// each item will be checked to see how many of these minimum stat values it has
 		// stack - when you can get a prefix+suffix i.e. 400edam from cruel+fools
@@ -98,25 +97,25 @@ var Pickit = {
 				"high": 250,
 				"mid": 200,
 				"low": 150
-				}
+				},
 			"ias": {
 				"stack": 0,
 				"high": 40,
 				"mid": 30,
 				"low": 10
-				}
+				},
 			"itemtohitperlevel": {
 				"stack": 0,
 				"high": 16,
 				"mid": 0,
 				"low": 0
-				}
+				},
 			"tohit": {
 				"stack": 0,
 				"high": 250,
 				"mid": 200,
 				"low": 100
-				}
+				},
 			"sockets": {
 				"stack": 0,
 				"high": 2,
@@ -124,7 +123,8 @@ var Pickit = {
 				"low": 0
 				}
 			}
-		}
+		}],
+		
 		
 		/*
 		//###pickit template. add more stats as needed###
@@ -167,84 +167,79 @@ var Pickit = {
 		}
 		###end pickit template###
 		*/
-		];
 		
-		
-		
-	init: function (notify) {
-		var i, filename;
-
-		for (i = 0; i < Config.PickitFiles.length; i += 1) {
-			filename = "pickit/" + Config.PickitFiles[i];
-
-			NTIP.OpenFile(filename, notify);
-		}
-
-		this.beltSize = Storage.BeltSize();
-	},
-
-	// Returns:
-	// -1 - Needs iding
-	// 0 - Unwanted
-	// 1 - NTIP wants
-	// 2 - Cubing wants
-	// 3 - Runeword wants
-	// 4 - Pickup to sell (triggered when low on gold)
-	checkItem: function (unit){
-		var rval = NTIP.CheckItem(unit, false, true);
-
-		if ((unit.classid === 617 || unit.classid === 618) && Town.repairIngredientCheck(unit)) {
-			return {result: 6, line: null};
-		}
-
-		if (Cubing.checkItem(unit)) {
-			return {result: 2, line: null};
-		}
-
-		if (Runewords.checkItem(unit)) {
-			return {result: 3, line: null};
-		}
-
-		// If total gold is less than 10k pick up anything worth 10 gold per
-		// square to sell in town.
-		if (me.getStat(14) + me.getStat(15) < Config.LowGold && rval.result === 0 && Town.ignoredItemTypes.indexOf(unit.itemType) === -1) {
-			// Gold doesn't take up room, just pick it up
-			if (unit.classid === 523) {
-				return {result: 4, line: null};
-			}
-
-			if (unit.getItemCost(1) / (unit.sizex * unit.sizey) >= 10) {
-				return {result: 4, line: null};
-			}
-		}
-
-		return rval;
-	},
-	
 	checkSwag: function(unit){
-		function checkMatch(pickit){
+		function checkMatch(){
 			function checkStat(stat){
-				var statid = unit.getStat(NTIPAliasStat[stat]);
-				if(pickit.stats[stat].stack != 0 && unit.getStat(statid) >= pickit.stats[stat].stack){stacks += 1; return true}
-				if(pickit.stats[stat].high != 0 unit.getStat(statid) >= pickit.stats[stat].high){highs += 1; return true}
-				if(pickit.stats[stat].mid != 0 unit.getStat(statid) >= pickit.stats[stat].mid){mids += 1; return true}
-				if(pickit.stats[stat].low != 0 unit.getStat(statid) >= pickit.stats[stat].min){mins += 1; return true}
+				var statid = NTIPAliasStat[stat];
+				say(NTIPAliasStat[stat] + " / " + stat + ": " + unit.getStat(statid));
+				delay(200);
+				if(mypickit.stats[stat].stack != 0 && unit.getStat(statid) >= mypickit.stats[stat].stack){say(stat + " is a stack"); stacks += 1; return true}
+				if(mypickit.stats[stat].high != 0 && unit.getStat(statid) >= mypickit.stats[stat].high){say(stat + " is a high"); highs += 1; return true}
+				if(mypickit.stats[stat].mid != 0 && unit.getStat(statid) >= mypickit.stats[stat].mid){say(stat + " is a mid"); mids += 1; return true}
+				if(mypickit.stats[stat].low != 0 && unit.getStat(statid) >= mypickit.stats[stat].min){say(stat + " is a low"); lows += 1; return true}
+				return false
 				}
 			function checkFlag(flag){
-				if(pickit.flags[flag] != 0 && unit.getFlag(NTIPAliasFlag[flag]) >= pickit.flags[flag]){highs += 1; return true}
+				if(mypickit.flags[flag] != 0 && unit.getFlag(NTIPAliasFlag[flag]) >= mypickit.flags[flag]){highs += 1; return true}
+				return false
 				}
-			var mins = 0,
+			//var currpick = pickit;
+			//say("Pickit has " + Object.keys(pickit).length + " keys");
+			var lows = 0,
 				mids = 0,
 				highs = 0,
-				stacks = 0;
-			if(pickit.classids.indexOf(unit.classid) == -1){return false}
-			if(!item.getFlag(0x10);){result = -1; return true}
-			Object.keys(pickit.flags).forEach(checkFlag);
-			Object.keys(pickit.stats).forEach(checkStat);
-			if((mins * pickit.weight.min + 
-				mids * pickit.weight.mid +
-				highs * pickit.weight.high +
-				stack * pickit.weight.stack) >= pickit.weight.PickAt){
+				stacks = 0,
+				mypickit = {
+					//I added two test pickits in here
+					//the first will pick up any Harlequin's Crest(shako)
+					//the second is for a rare cruel fools ias flail
+					//the shako pickit is for testing, the flail one
+					//is to show how a good rare pickit might look
+					"name": "shako",
+					"classids": [422],
+					"weight": {
+						"stack": 6,
+						"high": 3,
+						"mid": 2,
+						"low": 1,
+						"PickAt": 8
+						},
+					"stats": {
+						"itemallskills": {
+							"stack": 0,
+							"high": 2,
+							"mid": 0,
+							"low": 0
+							},
+						"itemmagicbonus": {
+							"stack": 0,
+							"high": 50,
+							"mid": 0,
+							"low": 0
+							},
+						"damageresist": {
+							"stack": 0,
+							"high": 0,
+							"mid": 10,
+							"low": 0
+							}
+						}
+					};
+			if(mypickit.classids.indexOf(unit.classid) == -1){return false}
+			if(!unit.getFlag(0x10)){result = -1; return true}
+			//Object.keys(mypickit.flags).forEach(checkFlag);
+			say("pickit stats: " + Object.keys(mypickit.stats).length);
+			Object.keys(mypickit.stats).forEach(checkStat);
+			delay(200);
+			say(lows + " lows, " + mids + " mids, " + highs + " highs, " + stacks + " stacks");
+			delay(300);
+			var total = (lows * mypickit.weight.low + 
+				mids * mypickit.weight.mid +
+				highs * mypickit.weight.high +
+				stacks * mypickit.weight.stack);
+			say("total: " + total);
+			if(total >= mypickit.weight.PickAt){
 				result = 1;
 				return true
 				}
@@ -255,10 +250,12 @@ var Pickit = {
 			return false
 			}
 		var result = 0, line = null;	
+		
 		//check potions
-		line = testpickits.findIndex(checkMatch());
+		checkMatch();
+		//line = Pickit.testpickits.findIndex(checkMatch()); // findIndex
 		return {result: result, line: line}
-		},
+		},	
 	
 	deliver: function(item, method, character){
 		var gid = item.gid;
@@ -315,8 +312,8 @@ var Pickit = {
 					}
 				}
 			}
-		}
-	
+		},
+	/*
 	dropItems: function(method, character){
 		// methods: drop or trade
 		// character: if trade, character to give it to
@@ -363,8 +360,9 @@ var Pickit = {
 				}
 			pickList.shift();
 			}
-		}	
-			
+		},	
+	*/	
+	
 	grabGoodItems: function(){
 		function ItemStats(unit) {
 			this.ilvl = unit.ilvl;
@@ -400,6 +398,7 @@ var Pickit = {
 				} while (item.getNext());
 			}
 		checklist.sort(this.sortItems);
+		say("checklist length: " + checklist.length);
 		while (checklist.length > 0) {
 			if (me.dead) {
 				return false;
@@ -409,9 +408,12 @@ var Pickit = {
 				item = getUnit(4, -1, -1, gid);
 				if (item && (item.mode === 3 || item.mode === 5)) {
 					status = this.checkSwag(item);
-					if (status.result && this.canPick(pickList[0])) {
-						canFit = Storage.Inventory.CanFit(pickList[0]) || [4, 22, 76, 77, 78].indexOf(pickList[0].itemType) > -1;
+					say("checkSwag result: " + status.result);
+					if (status.result && this.canPick(checklist[0])) {
+						canFit = Storage.Inventory.CanFit(checklist[0]) || [4, 22, 76, 77, 78].indexOf(checklist[0].itemType) > -1;
+						say("canFit: " + canFit);
 						if (canFit) {
+							say("picking item");
 							this.pickItem(item, status.result, status.line);
 							} else {
 							noSpaceList.push(new ItemStats(item));
@@ -419,7 +421,7 @@ var Pickit = {
 						}
 					}
 				}
-			pickList.shift();
+			checklist.shift();
 			}
 		if (noSpaceList.length) {
 			print(noSpaceList.length + " item(s) can't fit.");
@@ -474,164 +476,12 @@ var Pickit = {
 			scriptBroadcast("mule");
 			quit();
 			}
-
+		say("done checking for items");
 		return true;
 	
 		},	
 	
-	pickItems: function () {
-		function ItemStats(unit) {
-			this.ilvl = unit.ilvl;
-			this.itemType = unit.itemType;
-			this.quality = unit.quality;
-			this.classid = unit.classid;
-			this.code = unit.code;
-			this.name = unit.name;
-			this.x = unit.x;
-			this.y = unit.y;
-			this.sizex = unit.sizex; // cache for CanFit
-			this.sizey = unit.sizey;
-			this.gid = unit.gid;
-		}
-
-		var status, gid, item, canFit,
-			needMule = false,
-			pickList = [],
-			noSpaceList = [];
-
-		Town.clearBelt();
-
-		if (me.dead) {
-			return false;
-		}
-
-		while (!me.idle) {
-			delay(40);
-		}
-
-		item = getUnit(4);
-
-		if (item) {
-			do {
-				if ((item.mode === 3 || item.mode === 5) && getDistance(me, item) <= Config.PickRange) {
-					pickList.push(new ItemStats(item));
-				}
-			} while (item.getNext());
-		}
-
-		pickList.sort(this.sortItems);
-
-		while (pickList.length > 0) {
-			if (me.dead) {
-				return false;
-			}
-
-			gid = pickList[0].gid;
-
-			if (gid) {
-				item = getUnit(4, -1, -1, gid);
-
-				if (item && (item.mode === 3 || item.mode === 5)) {
-					status = this.checkItem(item);
-
-					if (status.result && this.canPick(pickList[0])) {
-						canFit = Storage.Inventory.CanFit(pickList[0]) || [4, 22, 76, 77, 78].indexOf(pickList[0].itemType) > -1;
-
-						if (canFit) {
-							this.pickItem(item, status.result, status.line);
-						} else {
-							noSpaceList.push(new ItemStats(item));
-						}
-					}
-				}
-			}
-
-			pickList.shift();
-		}
-
-		if (noSpaceList.length) {
-			print(noSpaceList.length + " item(s) can't fit.");
-		}
-
-		while (noSpaceList.length > 0) {
-			gid = noSpaceList[0].gid;
-
-			if (gid) {
-				item = getUnit(4, -1, -1, gid);
-
-				if (item && (item.mode === 3 || item.mode === 5)) {
-					status = this.checkItem(item);
-
-					if (status.result && this.canPick(noSpaceList[0])) {
-						canFit = Storage.Inventory.CanFit(noSpaceList[0]) || [4, 22, 76, 77, 78].indexOf(noSpaceList[0].itemType) > -1;
-
-						if (!canFit && Config.FieldID && Town.fieldID()) {
-							canFit = Storage.Inventory.CanFit(noSpaceList[0]) || [4, 22, 76, 77, 78].indexOf(noSpaceList[0].itemType) > -1;
-						}
-
-						if (!canFit && this.canMakeRoom()) {
-							print("ÿc7Trying to make room for " + this.itemColor(noSpaceList[0]) + noSpaceList[0].name);
-
-							if (!Town.visitTown()) {
-								print("ÿc7Not enough room for " + this.itemColor(noSpaceList[0]) + noSpaceList[0].name);
-
-								return false;
-							}
-
-							item = getUnit(4, -1, -1, gid);
-							canFit = Storage.Inventory.CanFit(noSpaceList[0]) || [4, 22, 76, 77, 78].indexOf(noSpaceList[0].itemType) > -1;
-						}
-
-						if (item) {
-							if (canFit) {
-								this.pickItem(item, status.result, status.line);
-							} else {
-								Misc.itemLogger("No room for", noSpaceList[0]);
-								print("ÿc7Not enough room for " + this.itemColor(noSpaceList[0]) + noSpaceList[0].name);
-
-								needMule = true;
-							}
-						}
-					}
-				}
-			}
-
-			noSpaceList.shift();
-		}
-
-		if (needMule && AutoMule.getInfo() && AutoMule.getInfo().hasOwnProperty("muleInfo") && AutoMule.getMuleItems().length > 0) {
-			scriptBroadcast("mule");
-			quit();
-		}
-
-		return true;
-	},
-
-	// check if we can even free up the inventory
-	canMakeRoom: function () {
-		var i,
-			items = Storage.Inventory.Compare(Config.Inventory);
-
-		if (items) {
-			for (i = 0; i < items.length; i += 1) {
-				switch (this.checkItem(items[i]).result) {
-				case -1: // item needs to be identified
-					return true;
-				case 0:
-					break;
-				default: // check if a kept item can be stashed
-					if (Town.ignoredItemTypes.indexOf(items[i].itemType) === -1 && Storage.Stash.CanFit(items[i])) {
-						return true;
-					}
-
-					break;
-				}
-			}
-		}
-
-		return false;
-	},
-
+	
 	pickItem: function (unit, status, keptLine) {
 		function ItemStats(unit) {
 			this.ilvl = unit.ilvl;
@@ -761,7 +611,7 @@ MainLoop:
 
 		return true;
 	},
-
+	
 	itemQualityToName: function (quality) {
 		var qualNames = ["", "lowquality", "normal", "superior", "magic", "set", "rare", "unique", "crafted"];
 
@@ -984,8 +834,8 @@ MainLoop:
 		}
 
 		return check === 4;
-	},
-
+	}
+	/*
 	fastPick: function () {
 		var item, gid, status;
 
@@ -1004,4 +854,5 @@ MainLoop:
 
 		return true;
 	}
+	*/
 };
